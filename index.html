@@ -1,0 +1,522 @@
+<!doctype html>        
+<html lang="en">        
+<head>        
+    <title>Quiz-Me</title>        
+    <!-- Required for mobile responsiveness -->        
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+  
+    <!-- PWA Requirements -->        
+    <link rel="manifest" href="manifest.json">        
+    <meta name="theme-color" content="#ffffff">        
+    <!-- (Optional) Enable standalone mode on iOS -->        
+    <meta name="apple-mobile-web-app-capable" content="yes">        
+  
+    <!-- Tailwind CSS CDN -->        
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">        
+    <!-- Google Fonts -->        
+    <link rel="preconnect" href="https://fonts.googleapis.com">        
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>        
+    <link href="https://fonts.googleapis.com/css2?family=Borel&family=Cabin+Sketch:wght@400;700&display=swap" rel="stylesheet">        
+    <!-- jQuery CDN -->        
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>        
+  
+    <style>        
+        /* Custom styles */        
+  
+        /* Loading Screen Styles */        
+        #loading-screen {        
+            position: fixed;        
+            inset: 0;        
+            background-color: rgba(255, 255, 255, 1);        
+            display: flex;        
+            align-items: center;        
+            justify-content: center;        
+            z-index: 9999;        
+            opacity: 0;        
+            pointer-events: none;        
+            transition: opacity 0.3s ease-in-out;        
+        }        
+  
+        #loading-screen.active {        
+            opacity: 1;        
+            pointer-events: auto;        
+        }        
+  
+        #loading-screen #loading-gif {        
+            max-width: 80%;        
+            max-height: 80%;        
+            width: 150px;        
+            height: 150px;        
+            animation: pulsate 1s ease-in-out infinite;        
+        }        
+  
+        @keyframes pulsate {        
+            0% {        
+                transform: scale(1);        
+            }        
+            50% {        
+                transform: scale(1.05);        
+            }        
+            100% {        
+                transform: scale(1);        
+            }        
+        }        
+  
+        /* Tab Styles */        
+        .tabs {        
+            display: flex;        
+            flex-wrap: nowrap;        
+            overflow-x: auto;        
+            scrollbar-width: none; /* Firefox */        
+            -ms-overflow-style: none;  /* IE 10+ */        
+        }        
+  
+        .tabs::-webkit-scrollbar {        
+            display: none; /* Safari and Chrome */        
+        }        
+  
+        .tab-button {        
+            flex: none;        
+            cursor: pointer;        
+            padding: 0.75rem 1.5rem;        
+            font-size: 1rem;        
+            font-weight: 500;        
+            border-bottom: 2px solid transparent;        
+            transition: all 0.3s ease-in-out;        
+            white-space: nowrap;        
+        }        
+  
+        .tab-button:hover {        
+            color: #3b82f6; /* Tailwind blue-500 */        
+        }        
+  
+        .tab-button.active {        
+            color: #3b82f6; /* Tailwind blue-500 */        
+            border-bottom: 2px solid #3b82f6; /* Tailwind blue-500 */        
+        }        
+  
+        /* Tab Content Styles */        
+        .tab-content {        
+            display: none;        
+            opacity: 0;        
+            transition: opacity 0.5s ease-in-out;        
+        }        
+  
+        .tab-content.active {        
+            display: block;        
+            opacity: 1;        
+        }        
+  
+        /* Animation for tab content */        
+        @keyframes fade-in {        
+            from {        
+                opacity: 0;        
+                transform: translateY(10%);        
+            }        
+            to {        
+                opacity: 1;        
+                transform: translateY(0);        
+            }        
+        }        
+  
+        /* Option Item Animation */        
+        @keyframes slide-in {        
+            from {        
+                opacity: 0;        
+                transform: translateX(-20%);        
+            }        
+            to {        
+                opacity: 1;        
+                transform: translateX(0);        
+            }        
+        }        
+  
+        /* Micro Animations */        
+        .animate-fade-in {        
+            animation: fade-in 0.5s forwards;        
+        }        
+  
+        .animate-slide-in {        
+            animation: slide-in 0.3s forwards;        
+        }        
+  
+        /* Modal Animation */        
+        .modal-enter {        
+            opacity: 0;        
+            transform: scale(0.9);        
+        }        
+  
+        .modal-enter-active {        
+            opacity: 1;        
+            transform: scale(1);        
+            transition: all 0.3s ease-out;        
+        }        
+  
+        .modal-exit {        
+            opacity: 1;        
+            transform: scale(1);        
+        }        
+  
+        .modal-exit-active {        
+            opacity: 0;        
+            transform: scale(0.9);        
+            transition: all 0.2s ease-in;        
+        }        
+  
+        /* Custom Font */        
+        .custom-font {        
+            font-family: 'Cabin Sketch', cursive;        
+        }        
+  
+        /* ---------------------------------------------------------------        
+           Additional Responsive Tweaks for PWA and mobile        
+           --------------------------------------------------------------- */        
+  
+        @media screen and (max-width: 640px) {        
+            /* Make the tab navigation fixed at the bottom for small screens */        
+            .tabs {        
+                position: fixed;        
+                bottom: 0;        
+                left: 0;        
+                right: 0;        
+                background-color: #ffffff;        
+                padding: 0.75rem;        
+                box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);        
+                z-index: 9999;        
+                justify-content: space-around;        
+            }        
+  
+            /* Ensure content is visible above the bottom nav */        
+            body {        
+                padding-bottom: 4rem;        
+            }        
+  
+            /* Adjust the loading gif size on small screens */        
+            #loading-screen #loading-gif {        
+                width: 100px;        
+                height: 100px;        
+            }        
+  
+            /* Increase tab-button hit area on mobile */        
+            .tab-button {        
+                padding: 1rem 1.5rem;        
+                font-size: 1.1rem;        
+            }        
+  
+            /* Make the header more compact on mobile */        
+            .flex.flex-col.md\:flex-row.md\:justify-between.md\:items-center.mb-6 {        
+                flex-direction: column;        
+                text-align: center;        
+            }        
+            .flex.flex-col.md\:flex-row.md\:justify-between.md\:items-center.mb-6 img {        
+                margin-bottom: 0.5rem;        
+            }        
+  
+            /* Make the avatar smaller on mobile */        
+            #user-avatar img {        
+                width: 70px;        
+                height: 70px;        
+            }        
+  
+            /* Buttons should be more tap-friendly */        
+            input[type="submit"],        
+            button {        
+                padding: 1rem !important;        
+                font-size: 1rem;        
+            }        
+  
+            /* Quiz view spacing on mobile */        
+            #quiz-view {        
+                margin-top: 1rem;        
+                margin-bottom: 1rem;        
+            }        
+        }        
+    </style>        
+    <script>        
+        window.navigate = function(hash) {        
+            window.location.hash = hash;        
+        };        
+    </script>        
+</head>        
+<body class="bg-gray-100">        
+  
+    <!-- Loading Screen -->        
+    <div id="loading-screen">        
+        <img src="https://img.pikbest.com/png-images/20190918/cartoon-snail-loading-loading-gif-animation_2734139.png!bw700" alt="Loading" id="loading-gif">        
+    </div>        
+  
+    <div class="container mx-auto p-4 md:p-6">        
+  
+        <!-- Header Section -->        
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">        
+            <div class="flex items-center">        
+                <img src="https://hcpl.net/wp-content/uploads/sites/130/2024/02/Web-LIST-CARDs-7-e1707758274567-261x300.png" alt="Logo" class="h-12 mr-3 animate-fade-in">        
+                <h1 class="text-4xl font-bold custom-font animate-fade-in">Quiz-Me</h1>        
+            </div>        
+            <div class="flex items-center justify-center mt-4 md:mt-0">        
+                <span class="text-sm text-gray-600 mr-2">Powered by:</span>        
+                <img src="https://us.ovhcloud.com/sites/default/files/styles/large_screens_1x/public/2022-03/black.png" alt="MongoDB" class="h-6 mr-1">        
+            </div>        
+        </div>        
+  
+        <!-- User Avatar -->        
+        <div id="user-avatar" class="flex justify-center mb-6">        
+            <!-- Avatar will be inserted here -->        
+        </div>        
+  
+        <!-- Tab Navigation -->        
+        <div class="mb-4 border-b border-gray-200">        
+            <nav class="tabs">        
+                <button class="tab-button active" data-tab="tab-home">Home</button>        
+                <button class="tab-button" data-tab="tab-quiz">Take Quiz</button>        
+            </nav>        
+        </div>        
+  
+        <!-- Tab Content -->        
+        <div id="tab-content">        
+  
+            <!-- Home Tab -->        
+            <div id="tab-home" class="tab-content active">        
+                <div class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-6 animate-fade-in">        
+                    <h2 class="text-2xl font-semibold mb-4">Welcome to Quiz-Me</h2>        
+                    <p class="text-gray-700">Use the tabs above (or below on mobile) to navigate through the application.</p>        
+                </div>        
+            </div>        
+  
+            <!-- Quiz Tab -->        
+            <div id="tab-quiz" class="tab-content">        
+                <div class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-6" id="quiz-container">        
+                    <h2 class="text-2xl font-semibold mb-4">Take the Quiz</h2>        
+                    <!-- Quiz Content will be loaded here -->        
+                </div>        
+            </div>        
+  
+        </div>        
+  
+    </div>        
+  
+    <!-- Custom JavaScript -->        
+    <script>        
+        $(document).ready(function() {        
+  
+            // Show loading screen during AJAX requests (if any in future)        
+            $(document).ajaxStart(function() {        
+                $('#loading-screen').addClass('active');        
+            }).ajaxStop(function() {        
+                $('#loading-screen').removeClass('active');        
+            });        
+  
+            // Generate a unique user ID (for future use)        
+            let user_id = localStorage.getItem('user_id');        
+            if (!user_id) {        
+                user_id = 'user-' + Math.random().toString(36).substr(2, 9);        
+                localStorage.setItem('user_id', user_id);        
+            }        
+  
+            // Display user avatar        
+            displayUserAvatar(user_id);        
+  
+            // Hide the loading screen when everything is loaded        
+            $('#loading-screen').removeClass('active');        
+  
+            // Initial Load        
+            if (window.location.hash) {        
+                handleRouting();        
+            } else {        
+                // On initial load, show Home tab        
+                showTab('tab-home');        
+            }        
+  
+            // Function to display user avatar        
+            function displayUserAvatar(user_id) {        
+                const avatarUrl = `https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${user_id}?`;        
+                const avatarImg = $(`<img src="${avatarUrl}" alt="User Avatar" class="w-16 h-16 rounded-full shadow-lg">`);        
+                $('#user-avatar').html(avatarImg.hide().fadeIn(500));        
+            }        
+  
+            // Tab Navigation        
+            $('.tab-button').on('click', function() {        
+                const targetTab = $(this).data('tab');        
+                showTab(targetTab);        
+  
+                // Update URL hash        
+                window.location.hash = targetTab;        
+            });        
+  
+            // Function to show a tab        
+            function showTab(tabId) {        
+                // Remove active class from all tabs        
+                $('.tab-button').removeClass('active');        
+  
+                // Add active class to the selected tab        
+                $(`.tab-button[data-tab="${tabId}"]`).addClass('active');        
+  
+                // Hide the current tab content        
+                const currentTabContent = $('.tab-content.active');        
+                if (currentTabContent.length) {        
+                    currentTabContent.removeClass('active').addClass('hidden');        
+                }        
+  
+                // Show the selected tab content        
+                const tabContent = $(`#${tabId}`);        
+                tabContent.removeClass('hidden').addClass('active animate-fade-in');        
+                setTimeout(() => {        
+                    tabContent.removeClass('animate-fade-in');        
+                }, 500);        
+  
+                // If the Quiz tab is selected, load the quiz        
+                if (tabId === 'tab-quiz') {        
+                    loadQuiz();        
+                }        
+            }        
+  
+            // Handle Routing Based on URL Hash        
+            function handleRouting() {        
+                const hash = window.location.hash;        
+  
+                if (hash.startsWith('#tab-')) {        
+                    const tabId = hash.substring(1); // Remove '#' to get tab id        
+                    showTab(tabId);        
+                } else {        
+                    // Default to Home tab        
+                    showTab('tab-home');        
+                }        
+            }        
+  
+            $(window).on('hashchange', function() {        
+                handleRouting();        
+            });        
+  
+            // Function to load the quiz        
+            function loadQuiz() {        
+                const quizContainer = $('#quiz-container');        
+                quizContainer.html('<p>Loading quiz...</p>');        
+  
+                // Hardcoded quiz data (this can be replaced with an API call in future)        
+                const quizData = {        
+                    title: "General Knowledge Quiz",        
+                    questions: [        
+                        {        
+                            question: "What is the capital of France?",        
+                            options: ["Berlin", "London", "Paris", "Rome"],        
+                            answer: 2        
+                        },        
+                        {        
+                            question: "Which planet is known as the Red Planet?",        
+                            options: ["Earth", "Mars", "Jupiter", "Venus"],        
+                            answer: 1        
+                        },        
+                        {        
+                            question: "Who wrote 'Hamlet'?",        
+                            options: ["Charles Dickens", "William Shakespeare", "Mark Twain", "Jane Austen"],        
+                            answer: 1        
+                        }        
+                    ]        
+                };        
+  
+                // Render the quiz        
+                renderQuiz(quizData);        
+            }        
+  
+            // Function to render the quiz        
+            function renderQuiz(quizData) {        
+                const quizContainer = $('#quiz-container');        
+                quizContainer.empty();        
+  
+                const quizTitle = $('<h2 class="text-2xl font-semibold mb-4"></h2>').text(quizData.title);        
+                quizContainer.append(quizTitle);        
+  
+                const quizForm = $('<form id="quiz-form" class="space-y-6"></form>');        
+  
+                quizData.questions.forEach((q, index) => {        
+                    const questionDiv = $(`        
+                        <div class="question-item">        
+                            <p class="text-lg font-semibold">${index + 1}. ${q.question}</p>        
+                            <div class="options-grid grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">        
+                            </div>        
+                        </div>        
+                    `);        
+  
+                    q.options.forEach((option, optIndex) => {        
+                        const optionId = `q${index}_opt${optIndex}`;        
+                        const optionDiv = $(`        
+                            <div class="flex items-center opacity-0 translate-x-[-20%]">        
+                                <input type="radio" name="question${index}" value="${optIndex}" id="${optionId}" class="mr-2">        
+                                <label for="${optionId}" class="text-gray-700">${option}</label>        
+                            </div>        
+                        `);        
+                        questionDiv.find('.options-grid').append(optionDiv);        
+                        setTimeout(() => {        
+                            optionDiv.addClass('animate-slide-in');        
+                        }, 50 * optIndex);        
+                    });        
+  
+                    quizForm.append(questionDiv);        
+                });        
+  
+                const submitButton = $('<input type="submit" value="Submit Quiz" class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 cursor-pointer transition duration-200">');        
+                quizForm.append(submitButton);        
+  
+                quizContainer.append(quizForm);        
+  
+                // Handle quiz submission        
+                quizForm.on('submit', function(e) {        
+                    e.preventDefault();        
+                    evaluateQuiz(quizData);        
+                });        
+            }        
+  
+            // Function to evaluate the quiz        
+            function evaluateQuiz(quizData) {        
+                const totalQuestions = quizData.questions.length;        
+                let score = 0;        
+  
+                quizData.questions.forEach((q, index) => {        
+                    const selectedOption = $(`input[name="question${index}"]:checked`).val();        
+                    if (parseInt(selectedOption) === q.answer) {        
+                        score++;        
+                    }        
+                });        
+  
+                // Display the results        
+                displayResults(score, totalQuestions);        
+            }        
+  
+            // Function to display quiz results        
+            function displayResults(score, totalQuestions) {        
+                const quizContainer = $('#quiz-container');        
+                quizContainer.empty();        
+  
+                const resultDiv = $('<div class="text-center"></div>');        
+                const scoreText = $('<p class="text-2xl font-bold"></p>').text(`You scored ${score} out of ${totalQuestions}`);        
+                resultDiv.append(scoreText);        
+  
+                // Display a message based on the score        
+                let message = '';        
+                const percentage = (score / totalQuestions) * 100;        
+                if (percentage === 100) {        
+                    message = 'Excellent! You got all the answers correct.';        
+                } else if (percentage >= 70) {        
+                    message = 'Great job! You did well.';        
+                } else if (percentage >= 50) {        
+                    message = 'Good effort! Keep practicing.';        
+                } else {        
+                    message = 'Better luck next time!';        
+                }        
+                const messageText = $('<p class="text-lg mt-4"></p>').text(message);        
+                resultDiv.append(messageText);        
+  
+                // Button to retake the quiz        
+                const retakeButton = $('<button class="mt-6 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">Retake Quiz</button>');        
+                retakeButton.on('click', function() {        
+                    loadQuiz();        
+                });        
+                resultDiv.append(retakeButton);        
+  
+                quizContainer.append(resultDiv);        
+            }        
+  
+        });        
+    </script>        
+</body>        
+</html>        
